@@ -228,10 +228,6 @@
       <span>Mediciones guardadas</span>
       <strong id="stat-count">0</strong>
     </div>
-    <div class="session-badge" id="lic-badge" style="display:none">
-      <span>Periodo de prueba</span>
-      <strong id="lic-text">—</strong>
-    </div>
 
     <div class="section-label" style="margin-top:12px">Descarga de datos</div>
     <button class="btn btn-success" id="btn-dl-last" onclick="downloadLast()" disabled>
@@ -523,7 +519,7 @@ function handleLine(line) {
       break;
 
     case 'LIC':
-      showLicense(p[1], parseInt(p[2]), parseInt(p[3]));
+      showLicense(p[1]);
       break;
 
     case 'INFO':
@@ -543,23 +539,12 @@ async function sendCmd(cmd) {
   } catch(e) { log('Error: '+e.message,'err'); }
 }
 
-// --- Periodo de prueba ---
-function showLicense(estado, dias, fin) {
-  const badge = document.getElementById('lic-badge');
-  const txt   = document.getElementById('lic-text');
-  badge.style.display = 'flex';
+// --- Periodo de uso (no se muestra en pantalla) ---
+function showLicense(estado) {
+  const antes = licVencida;
   licVencida = (estado === 'VENCIDA');
-  if (estado === 'NOINI') {
-    txt.textContent = '—';
-  } else if (licVencida) {
-    txt.textContent = 'Vencido';
-    txt.style.color = 'var(--danger)';
-    log('Periodo de prueba vencido: el equipo ya no toma mediciones nuevas. Los datos guardados sí se pueden descargar.','err');
-  } else {
-    const f = new Date(fin*1000).toLocaleDateString('es');
-    txt.textContent = dias + (dias === 1 ? ' día' : ' días');
-    txt.style.color = dias <= 3 ? 'var(--warn)' : '';
-    log('Periodo de prueba vigente hasta el '+f+' ('+dias+' días).','info');
+  if (licVencida && !antes) {
+    log('Equipo no disponible para nuevas mediciones. Contacte al responsable. Los datos guardados sí se pueden descargar.','err');
   }
   document.getElementById('btn-measure').disabled = licVencida || !isConnected();
 }
