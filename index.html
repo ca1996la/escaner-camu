@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Análisis Espectral</title>
+<meta name="theme-color" content="#0d1526">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -210,6 +214,10 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
+    <button class="btn btn-connect" id="btn-install" style="display:none" onclick="installApp()">
+      <span class="icon">⤓</span> Instalar app
+    </button>
+
     <div class="section-label">Sensor</div>
     <button class="btn btn-connect" id="btn-connect" onclick="toggleConnect()">
       <span class="icon">⬡</span> Conectar Sensor
@@ -289,8 +297,8 @@
   <div id="log"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="chart.umd.js"></script>
+<script src="jszip.min.js"></script>
 <script>
 const CHANNELS = [
   {id:'A',nm:410},{id:'B',nm:435},{id:'C',nm:460},
@@ -696,6 +704,33 @@ function clearUI() {
   measurements = [];
   renderAll();
 }
+
+// --- App instalable / sin internet ---
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installPrompt = e;
+  document.getElementById('btn-install').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('btn-install').style.display = 'none';
+  log('App instalada ✓ Ya puedes abrirla sin internet desde su ícono.','ok');
+});
+async function installApp() {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  document.getElementById('btn-install').style.display = 'none';
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => log('Modo sin internet listo.','ok'))
+    .catch(e => log('Modo sin internet no disponible: '+e.message,'warn'));
+}
+
+// En celular, el log empieza plegado para no tapar la gráfica
+if (window.innerWidth < 680) toggleLog();
 
 if (!navigator.bluetooth) {
   log('Web Bluetooth no disponible.','err');
